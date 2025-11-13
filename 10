@@ -1,0 +1,40 @@
+#include <stdio.h>
+int main() {
+ int bucketCapacity, outputRate, totalSeconds = 0;
+ int packetsPerSecond[25]; // Maximum 25 seconds
+ int currentPackets = 0, droppedPackets = 0;
+ printf("LEAKY BUCKET ALGORITHM\n");
+ printf("Enter bucket capacity: ");
+ scanf("%d", &bucketCapacity);
+ printf("Enter output rate: ");
+ scanf("%d", &outputRate);
+ // Input packets for each second
+ while (1) {
+ printf("Packets arriving at second %d: ", totalSeconds + 1);
+ scanf("%d", &packetsPerSecond[totalSeconds++]);
+ int continueInput;
+ printf("Enter 1 to continue input or 0 to stop: ");
+ scanf("%d", &continueInput);
+ if (!continueInput) break;
+ }
+
+printf("\nSECOND\tRECEIVED\tSENT\tLEFT_IN_BUCKET\tDROPPED\n"
+);
+ // Process packets for each second
+ for (int sec = 0; sec < totalSeconds || currentPackets > 0; sec++) {
+ int received = (sec < totalSeconds) ? packetsPerSecond[sec] : 0;
+ currentPackets += received;
+ if (currentPackets > bucketCapacity) {
+ droppedPackets = currentPackets - bucketCapacity;
+ currentPackets = bucketCapacity;
+ } else {
+ droppedPackets = 0;
+ }
+ int sent = (currentPackets < outputRate) ? currentPackets :
+outputRate;
+ currentPackets -= sent;
+ printf("%d\t%d\t\t%d\t%d\t\t%d\n", sec + 1, received, sent,
+currentPackets, droppedPackets);
+ }
+ return 0;
+}
