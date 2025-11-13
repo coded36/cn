@@ -53,3 +53,9 @@ int main(int argc, char *argv[]) {
  printf("\n--------------------\nTransfer complete.\n");
  return 0;
 }
+
+
+$ gcc 5server.c
+./a.out 8000
+$ gcc 5client.c
+$ ./a.out 127.0.0.1 8000
