@@ -1,0 +1,55 @@
+#include <stdio.h>
+int h[12];
+void genhamcode() {
+ int i, t;
+ h[1] = (h[3] + h[5] + h[7] + h[9] + h[11]) % 2;
+ h[2] = (h[3] + h[6] + h[7] + h[10] + h[11]) % 2;
+ h[4] = (h[5] + h[6] + h[7]) % 2;
+ h[8] = (h[9] + h[10] + h[11]) % 2;
+ printf("\nTransmitted codeword:\n");
+ for (i = 1; i < 12; i++) printf("%d ", h[i]);
+ printf("\n");
+}
+void makeerror() {
+ int pos;
+ printf("\nEnter bit position to flip (1–11): ");
+ scanf("%d", &pos);
+ h[pos] ^= 1; // toggle bit using XOR
+ printf("\nErroneous codeword:\n");
+ for (int i = 1; i < 12; i++) printf("%d ", h[i]);
+ printf("\n");
+}
+void correcterror() {
+ int r1, r2, r4, r8, errpos;
+ r1 = (h[1] + h[3] + h[5] + h[7] + h[9] + h[11]) % 2;
+ r2 = (h[2] + h[3] + h[6] + h[7] + h[10] + h[11]) % 2;
+ r4 = (h[4] + h[5] + h[6] + h[7]) % 2;
+ r8 = (h[8] + h[9] + h[10] + h[11]) % 2;
+ errpos = r8 * 8 + r4 * 4 + r2 * 2 + r1;
+ if (errpos) {
+ printf("\nError detected at position %d. Correcting...\n", errpos);
+ h[errpos] ^= 1;
+ } else {
+ printf("\nNo error detected.\n");
+ }
+ printf("\nCorrected codeword:\n");
+ for (int i = 1; i < 12; i++) printf("%d ", h[i]);
+ printf("\n");
+}
+int main() {
+ printf("Enter 7-bit message (for positions 3,5,6,7,9,10,11):\n");
+ for (int i = 1; i < 12; i++)
+ if (i == 3 || i == 5 || i == 6 || i == 7 || i == 9 || i == 10 || i == 11)
+ scanf("%d", &h[i]);
+ genhamcode();
+ int ch;
+ printf("\nDo you want to introduce an error? (1=Yes, 0=No): ");
+ scanf("%d", &ch);
+ if (ch) {
+ makeerror();
+ correcterror();
+ } else {
+ printf("\nNo error introduced.\n");
+ }
+ return 0;
+}
