@@ -1,0 +1,55 @@
+SERVER
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+int main(int argc, char *argv[]) {
+ if (argc < 2) { printf("Usage: %s <port>\n", argv[0]); return 1; }
+ int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+ struct sockaddr_in serv = {AF_INET, htons(atoi(argv[1])),
+INADDR_ANY}, cli;
+ bind(sockfd, (struct sockaddr*)&serv, sizeof(serv));
+ listen(sockfd, 1);
+ printf("Server ready. Waiting for client...\n");
+ socklen_t len = sizeof(cli);
+ int client = accept(sockfd, (struct sockaddr*)&cli, &len);
+ char filename[256], buf[1024]; FILE *fp;
+ read(client, filename, sizeof(filename));
+ printf("Client requested: %s\n", filename);
+ fp = fopen(filename, "r");
+ if (!fp) write(client, "File not found!\n", 16);
+ else {
+ while (fgets(buf, sizeof(buf), fp))
+ write(client, buf, strlen(buf));
+ fclose(fp);
+ }
+ close(client); close(sockfd);
+ printf("File transfer complete.\n");
+ return 0;
+}
+
+
+CLIENT
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+int main(int argc, char *argv[]) {
+ if (argc < 3) { printf("Usage: %s <ip> <port>\n", argv[0]); return 1; }
+ int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+ struct sockaddr_in serv = {AF_INET, htons(atoi(argv[2]))};
+ inet_pton(AF_INET, argv[1], &serv.sin_addr);
+ connect(sockfd, (struct sockaddr*)&serv, sizeof(serv));
+ char filename[256], buf[1024];
+ printf("Enter file name: "); scanf("%s", filename);
+ write(sockfd, filename, strlen(filename));
+ printf("\n--- File content ---\n");
+ int n; while ((n = read(sockfd, buf, sizeof(buf)-1)) > 0) {
+ buf[n] = '\0'; printf("%s", buf);
+ }
+ close(sockfd);
+ printf("\n--------------------\nTransfer complete.\n");
+ return 0;
+}
