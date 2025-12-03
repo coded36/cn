@@ -1,37 +1,28 @@
 #include <stdio.h>
-// Modular exponentiation
-int modexp(int base, int exp, int mod) {
- int res = 1;
- base %= mod;
- while (exp) {
- if (exp % 2) res = (res * base) % mod;
- base = (base * base) % mod;
- exp /= 2;
- }
- return res;
-}
-// Find primitive root of prime q
-int primitive_root(int q) {
- for (int alpha = 2; alpha < q; alpha++) {
- int flag = 1;
- for (int r = 1; r < q-1; r++)
- for (int s = r+1; s < q; s++)
- if (modexp(alpha,r,q) == modexp(alpha,s,q)) flag = 0;
- if (flag) return alpha;
- }
- return -1;
-}
+#include <stdlib.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
 int main() {
- int q, xa, xb;
- printf("Prime q: "); scanf("%d",&q);
- printf("Private key xa (<q): "); scanf("%d",&xa);
- printf("Private key xb (<q): "); scanf("%d",&xb);
- int alpha = primitive_root(q);
- int ya = modexp(alpha, xa, q);
- int yb = modexp(alpha, xb, q);
- int ka = modexp(yb, xa, q);
- int kb = modexp(ya, xb, q);
- printf("alpha=%d, ya=%d, yb=%d\n", alpha, ya, yb);
- printf("ka=%d, kb=%d\n", ka, kb);
- printf("%s\n", ka==kb ? "Keys match" : "Keys do not match");
+    char hostname[100];
+    struct hostent *host_entry;
+    char *IPbuffer;
+
+    printf("Enter URL or domain name: ");
+    scanf("%s", hostname);
+
+    // Get host information
+    host_entry = gethostbyname(hostname);
+    if (host_entry == NULL) {
+        perror("Error resolving hostname");
+        return 1;
+    }
+
+    // Convert first IP address to string
+    IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
+
+    printf("Official Name: %s\n", host_entry->h_name);
+    printf("IP Address  : %s\n", IPbuffer);
+
+    return 0;
 }
