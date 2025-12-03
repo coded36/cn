@@ -1,90 +1,82 @@
-Server
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #define FIFO_REQ "fifo_req"
 #define FIFO_RES "fifo_res"
+
 int main() {
- int req_fd, res_fd, file_fd;
- char filename[100], buffer[1024], ch;
- FILE *file;
- // Create FIFOs
- mkfifo(FIFO_REQ, 0666);
- mkfifo(FIFO_RES, 0666);
- printf(" Server online, waiting for client...\n");
- // Open FIFO for reading client requests
- req_fd = open(FIFO_REQ, O_RDONLY);
- while (1) {
- // Read filename from client
- int n = read(req_fd, filename, sizeof(filename) - 1);
- if (n <= 0) continue;
- filename[n] = '\0';
- printf("\n Request received for file: %s\n", filename);
- // Try opening the requested file
- file = fopen(filename, "r");
- res_fd = open(FIFO_RES, O_WRONLY);
- if (!file) {
- char *err = " File not found!";
- write(res_fd, err, strlen(err));
- } else {
- int i = 0;
- while ((ch = fgetc(file)) != EOF && i < sizeof(buffer) - 1)
- buffer[i++] = ch;
- buffer[i] = '\0';
- fclose(file);
- printf(" File found. Sending contents...\n");
- write(res_fd, buffer, strlen(buffer));
- }
- close(res_fd);
- }
- close(req_fd);
- return 0;
+    int req_fd, res_fd;
+    char filename[100], buffer[1024];
+    FILE *file;
+
+    mkfifo(FIFO_REQ, 0666);
+    mkfifo(FIFO_RES, 0666);
+
+    printf("SERVER READY – Waiting for client...\n");
+    req_fd = open(FIFO_REQ, O_RDONLY);
+
+    while (1) {
+        memset(filename, 0, sizeof(filename));
+        int n = read(req_fd, filename, sizeof(filename) - 1);
+        if (n <= 0) continue;
+
+        filename[n] = '\0';
+        printf("\nClient requested: %s\n", filename);
+
+        res_fd = open(FIFO_RES, O_WRONLY);
+
+        file = fopen(filename, "r");
+        if (!file) {
+            write(res_fd, "FILE NOT FOUND", 14);
+        } else {
+            memset(buffer, 0, sizeof(buffer));
+            fread(buffer, 1, sizeof(buffer) - 1, file);
+            fclose(file);
+            write(res_fd, buffer, strlen(buffer));
+            printf("File sent successfully.\n");
+        }
+
+        close(res_fd);
+    }
+
+    close(req_fd);
+    return 0;
 }
-Client
+
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #define FIFO_REQ "fifo_req"
 #define FIFO_RES "fifo_res"
+
 int main() {
- int req_fd, res_fd, file_fd;
- char filename[100], buffer[1024], ch;
- FILE *file;
- // Create FIFOs
- mkfifo(FIFO_REQ, 0666);
- mkfifo(FIFO_RES, 0666);
- printf(" Server online, waiting for client...\n");
- // Open FIFO for reading client requests
- req_fd = open(FIFO_REQ, O_RDONLY);
- while (1) {
- // Read filename from client
- int n = read(req_fd, filename, sizeof(filename) - 1);
- if (n <= 0) continue;
- filename[n] = '\0';
- printf("\n Request received for file: %s\n", filename);
- // Try opening the requested file
- file = fopen(filename, "r");
- res_fd = open(FIFO_RES, O_WRONLY);
- if (!file) {
- char *err = " File not found!";
- write(res_fd, err, strlen(err));
- } else {
- int i = 0;
- while ((ch = fgetc(file)) != EOF && i < sizeof(buffer) - 1)
- buffer[i++] = ch;
- buffer[i] = '\0';
- fclose(file);
- printf(" File found. Sending contents...\n");
- write(res_fd, buffer, strlen(buffer));
- }
- close(res_fd);
- }
- close(req_fd);
- return 0;
+    int req_fd, res_fd;
+    char filename[100], buffer[1024];
+
+    printf("Enter filename: ");
+    scanf("%s", filename);
+
+    req_fd = open(FIFO_REQ, O_WRONLY);
+    write(req_fd, filename, strlen(filename));
+    close(req_fd);
+
+    res_fd = open(FIFO_RES, O_RDONLY);
+    int n = read(res_fd, buffer, sizeof(buffer) - 1);
+    buffer[n] = '\0';
+    close(res_fd);
+
+    printf("\n----- FILE CONTENT -----\n%s\n------------------------\n", buffer);
+
+    return 0;
 }
+
+
